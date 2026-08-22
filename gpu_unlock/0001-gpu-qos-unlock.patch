@@ -1,0 +1,35 @@
+--- a/drivers/base/power/qos.c
++++ b/drivers/base/power/qos.c
+@@ -31,6 +31,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/slab.h>
+ #include <linux/device.h>
++#include <linux/string.h>
+ #include <linux/mutex.h>
+ #include <linux/export.h>
+ #include <linux/pm_runtime.h>
+@@ -391,6 +392,12 @@
+ 			   enum dev_pm_qos_req_type type, s32 value)
+ {
+ 	int ret;
++	/* GPU unlock: force kgsl MAX_FREQUENCY requests to unlimited */
++	if (type == DEV_PM_QOS_MAX_FREQUENCY && dev && dev_name(dev) &&
++	    strstr(dev_name(dev), "kgsl"))
++		value = 0x7fffffff;
++
++
+ 
+ 	mutex_lock(&dev_pm_qos_mtx);
+ 	ret = __dev_pm_qos_add_request(dev, req, type, value);
+@@ -428,6 +435,11 @@
+ 	case DEV_PM_QOS_MIN_FREQUENCY:
+ 	case DEV_PM_QOS_MAX_FREQUENCY:
+ 		curr_value = req->data.freq.pnode.prio;
++		/* GPU unlock: force kgsl MAX_FREQUENCY requests to unlimited */
++		if (req->type == DEV_PM_QOS_MAX_FREQUENCY &&
++		    req->dev && dev_name(req->dev) &&
++		    strstr(dev_name(req->dev), "kgsl"))
++			new_value = 0x7fffffff;
+ 		break;
+ 	case DEV_PM_QOS_FLAGS:
+ 		curr_value = req->data.flr.flags;

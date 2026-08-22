@@ -5,7 +5,7 @@ env:
   ANDROID_VERSION: 'android16'
   KERNEL_VERSION: '6.12'
   SUB_VERSION: '23_gki'
-  KERNEL_NAME: 'android16-5-ga8f88ad96df3-ab13929693-4k'
+  KERNEL_NAME: 'android16-5-g4fd992313445-mi-4k'
   CCACHE_KEY: ccache-neov5-gki-6.12.23
 
 on:
@@ -551,6 +551,15 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
            
+      - name: 应用GPU解锁补丁(qos)
+        run: |
+          cd kernel_workspace
+          git clone --depth=1 https://github.com/$GITHUB_REPOSITORY.git -b $GITHUB_REF_NAME gpu_unlock_repo
+          cp ./gpu_unlock_repo/gpu_unlock/0001-gpu-qos-unlock.patch ./common/
+          cd ./common
+          patch -p1 -F3 < 0001-gpu-qos-unlock.patch || true
+          cd ..
+          rm -rf gpu_unlock_repo
       - name: 构建内核
         run: |
           WORKDIR="$(pwd)"
